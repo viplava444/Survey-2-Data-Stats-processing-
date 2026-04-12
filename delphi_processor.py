@@ -383,8 +383,14 @@ def process_survey_data(
         all_new_cols.extend(required_cols[group])
     
     # Create output dataframe
-    out_block = pd.DataFrame(np.nan, index=df.index, columns=all_new_cols)
-    out = pd.concat([df, out_block], axis=1)
+    # Peers columns hold comma-separated strings, so they need object dtype.
+    # S2_AGG and IQR columns are numeric (float64).
+    float_cols = required_cols['S2_AGG'] + required_cols['IQR']
+    peers_cols = required_cols['Peers']
+
+    float_block = pd.DataFrame(np.nan, index=df.index, columns=float_cols, dtype=float)
+    peers_block = pd.DataFrame("", index=df.index, columns=peers_cols, dtype=object)
+    out = pd.concat([df, float_block, peers_block], axis=1)
     
     log(f"Created {len(all_new_cols)} new columns")
     
