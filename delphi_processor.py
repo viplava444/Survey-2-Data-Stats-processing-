@@ -47,6 +47,11 @@ MEASURES = [
     "Upper_resp _inf",
     "MACE"
 ]
+MEASURE_FIELDS = [
+    "Range_Lower","Range_Upper","Mode",
+    "Quartile_1","Quartile_3","Median",
+    "Mean","StdDev","Alpha","Beta"
+]
 
 T = 300        # Number of CDF sample points
 EPS_MSE = 1e-20  # Minimum MSE to prevent division by zero
@@ -56,9 +61,7 @@ EPS_MSE = 1e-20  # Minimum MSE to prevent division by zero
 INPUT_COLS_TO_DROP = {
     "Start Date",
     "End Date",
-    "Unique Qualtrics ID",
-    "RecipientFirstName",
-    "RecipientLastName",
+    
 }
 
 # social_desirability columns to pass through (preserve order from input)
@@ -78,14 +81,7 @@ SOCIAL_DESIRABILITY_COLS = [
 # The IQR tokens also remove the hyphen in ARC-20.
 
 def _s2_agg_token(measure: str) -> str:
-    """
-    Column token used in S2_AGG_* columns.
-    Rule: strip all spaces from the measure name (keep other chars incl. hyphens).
-    e.g.  'PGA_of _PsA'   -> 'PGA_of_PsA'
-          'Serious _inf'  -> 'Serious_inf'
-          'ARC-20'        -> 'ARC-20'   (hyphen kept)
-    """
-    return measure.replace(" ", "")
+    return measure  # KEEP EXACT FORMAT
 
 
 def _iqr_token(measure: str) -> str:
@@ -108,39 +104,30 @@ def _iqr_token(measure: str) -> str:
 # ============================================================================
 
 def get_required_columns() -> dict:
-    """
-    Return the names of all generated columns grouped by type.
-    Names match the Qualtrics contact file exactly.
-    """
-    s2_fields = [
-        "Range_Lower", "Range_Upper", "Mode",
-        "Quartile_1", "Quartile_3", "Median",
-        "Mean", "StdDev", "Alpha", "Beta"
-    ]
+    s2_fields = MEASURE_FIELDS
+
     iqr_fields = [
         "Range_Lower_min", "Range_Lower_max",
         "Range_Upper_min", "Range_Upper_max",
         "Mode_min", "Mode_max",
         "StdDev_min", "StdDev_max"
     ]
-    peer_fields = [
-        "Range_Lower", "Range_Upper", "Mode",
-        "Quartile_1", "Quartile_3", "Median",
-        "Mean", "StdDev", "Alpha", "Beta"
-    ]
+
+    peer_fields = MEASURE_FIELDS
 
     columns = {'S2_AGG': [], 'IQR': [], 'Peers': []}
 
+    # S2_AGG (KEEP ORIGINAL NAMES)
     for m in MEASURES:
-        tok_s2 = _s2_agg_token(m)
         for f in s2_fields:
-            columns['S2_AGG'].append(f"S2_AGG_{tok_s2}_{f}")
+            columns['S2_AGG'].append(f"S2_AGG_{m}_{f}")
 
+    # IQR (KEEP ORIGINAL NAMES)
     for m in MEASURES:
-        tok_iqr = _iqr_token(m)
         for f in iqr_fields:
-            columns['IQR'].append(f"IQR_{tok_iqr}_{f}")
+            columns['IQR'].append(f"IQR_{m}_{f}")
 
+    # PEERS (KEEP ORIGINAL NAMES)
     for m in MEASURES:
         for f in peer_fields:
             columns['Peers'].append(f"Peers_{m}_{f}")
