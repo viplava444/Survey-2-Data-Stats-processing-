@@ -377,15 +377,26 @@ def process_survey_data(
     
     # Get required columns with EXACT naming
     required_cols = get_required_columns()
-    all_new_cols = []
-    for group in ['S2_AGG', 'IQR', 'Peers']:
-        all_new_cols.extend(required_cols[group])
     
-    # Create output dataframe
-    out_block = pd.DataFrame(np.nan, index=df.index, columns=all_new_cols)
-    out = pd.concat([df, out_block], axis=1)
+    # Create output dataframe with correct dtypes
+    # S2_AGG and IQR: numeric (float)
+    # Peers: string (object)
+    out = df.copy()
     
-    log(f"Created {len(all_new_cols)} new columns with EXACT naming")
+    # Add S2_AGG columns (numeric)
+    for col in required_cols['S2_AGG']:
+        out[col] = np.nan
+    
+    # Add IQR columns (numeric)
+    for col in required_cols['IQR']:
+        out[col] = np.nan
+    
+    # Add Peers columns (string/object) - CRITICAL FIX
+    for col in required_cols['Peers']:
+        out[col] = pd.Series(dtype='object')  # String type!
+    
+    all_new_cols = len(required_cols['S2_AGG']) + len(required_cols['IQR']) + len(required_cols['Peers'])
+    log(f"Created {all_new_cols} new columns with EXACT naming")
     
     # Process each respondent
     for i in range(n):
